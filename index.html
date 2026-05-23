@@ -4,31 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Football Recruitment Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0f172a;--card:#1e293b;--border:#334155;--border2:#475569;
-  --blue:#38bdf8;--gold:#fbbf24;--green:#4ade80;--red:#f87171;--muted:#94a3b8;
-  --text:#f1f5f9;--text2:#cbd5e1;--text3:#94a3b8;
-  --pos:#4ade80;--neg:#f87171;--neu:#94a3b8;
+  --bg:#0b1120;--card:#16213a;--card2:#1c2d4a;--border:#253551;--border2:#3a5068;
+  --blue:#38bdf8;--gold:#f59e0b;--green:#34d399;--red:#f87171;--muted:#7e97b4;
+  --text:#eef2f7;--text2:#c8d6e5;--text3:#7e97b4;
+  --pos:#34d399;--neg:#f87171;--neu:#7e97b4;
+  --shadow:0 2px 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25);
+  --shadow-sm:0 1px 4px rgba(0,0,0,.3);
   --font:'Inter',system-ui,sans-serif;
+  --radius:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;
+  -webkit-font-smoothing:antialiased;letter-spacing:.01em}
 /* ── HEADER ── */
-.hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);
-  border-bottom:1px solid var(--border);padding:18px 28px;display:flex;align-items:center;gap:16px}
-.hdr-logo{width:44px;height:44px;background:linear-gradient(135deg,var(--blue),var(--gold));
-  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.hdr-text h1{font-size:18px;font-weight:700;letter-spacing:.3px;color:var(--text)}
-.hdr-text p{font-size:12px;color:var(--muted);margin-top:2px}
-.hdr-badge{margin-left:auto;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);
-  color:var(--blue);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.hdr{background:linear-gradient(135deg,#060e1c 0%,#0d2244 40%,#091830 100%);
+  border-bottom:1px solid rgba(56,189,248,.12);padding:20px 32px;display:flex;align-items:center;gap:18px}
+.hdr-logo{width:46px;height:46px;background:linear-gradient(135deg,#0ea5e9,#f59e0b);
+  border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+  box-shadow:0 0 18px rgba(14,165,233,.3)}
+.hdr-text h1{font-size:19px;font-weight:800;letter-spacing:.2px;color:var(--text)}
+.hdr-text p{font-size:12px;color:var(--muted);margin-top:3px;letter-spacing:.02em}
+.hdr-badge{margin-left:auto;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);
+  color:var(--blue);font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;white-space:nowrap;
+  letter-spacing:.04em}
 /* ── NAV ── */
-.nav{display:flex;gap:0;padding:0 28px;background:var(--card);border-bottom:1px solid var(--border)}
-.nav-btn{padding:14px 24px;font-size:13px;font-weight:600;color:var(--muted);
+.nav{display:flex;gap:0;padding:0 32px;background:var(--card);border-bottom:1px solid var(--border)}
+.nav-btn{padding:15px 26px;font-size:13px;font-weight:600;color:var(--muted);
   background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;
-  transition:all .2s;letter-spacing:.3px}
+  transition:all .2s;letter-spacing:.04em}
 .nav-btn:hover{color:var(--text2)}
 .nav-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
 /* ── SECTION ── */
@@ -55,44 +63,45 @@ select.fsel:focus{outline:none;border-color:var(--blue)}
 .filter-reset:hover{border-color:var(--blue);color:var(--blue)}
 /* ── STAT CARDS ── */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:16px 18px;display:flex;flex-direction:column;gap:4px}
-.stat-card .sv{font-size:28px;font-weight:800;line-height:1}
-.stat-card .sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
-.stat-card .sd{font-size:12px;color:var(--text3);margin-top:2px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow-sm)}
+.stat-card .sv{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.5px}
+.stat-card .sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:6px;font-weight:600}
+.stat-card .sd{font-size:11px;color:var(--text3);margin-top:3px}
 .sv.blue{color:var(--blue)}.sv.green{color:var(--green)}.sv.gold{color:var(--gold)}.sv.red{color:var(--red)}
 /* ── CHART ROW ── */
 .chart-row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:20px}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow)}
 .chart-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:4px}
 .chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
 .chart-wrap{position:relative}
 /* ── TABLE ── */
-.tbl-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.tbl-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.tbl-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:visible;box-shadow:var(--shadow)}
+.tbl-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0}
 .tbl-header h3{font-size:13px;font-weight:700;color:var(--text2)}
 .tbl-count{font-size:12px;color:var(--muted)}
-.tbl-wrap{overflow-x:auto}
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--radius) var(--radius)}
 table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{padding:10px 14px;text-align:left;color:var(--muted);font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);
-  cursor:pointer;user-select:none;white-space:nowrap;background:var(--card)}
+thead th{padding:11px 14px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);
+  cursor:pointer;user-select:none;white-space:normal;min-width:60px;background:var(--card);transition:color .15s}
 thead th:hover{color:var(--blue)}
-thead th .sort-icon{margin-left:4px;opacity:.4}
+thead th .sort-icon{margin-left:3px;opacity:.4}
 thead th.sorted .sort-icon{opacity:1;color:var(--blue)}
-tbody tr{border-bottom:1px solid rgba(51,65,85,.5);cursor:pointer;transition:background .15s}
-tbody tr:hover{background:rgba(56,189,248,.05)}
+tbody tr{border-bottom:1px solid rgba(37,53,81,.6);cursor:pointer;transition:background .15s}
+tbody tr:hover{background:rgba(56,189,248,.06)}
 tbody tr:last-child{border-bottom:none}
 tbody td{padding:10px 14px;vertical-align:middle}
 .p-name{font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
 .p-club{color:var(--muted);font-size:11px}
 .p-pos{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;
   background:rgba(148,163,184,.12);color:var(--muted)}
-.flag-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;
-  font-size:11px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
-.flag-badge.positive{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
-.flag-badge.neutral{background:rgba(148,163,184,.12);color:var(--muted);border:1px solid rgba(148,163,184,.25)}
-.flag-badge.at_risk{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.flag-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;
+  font-size:10.5px;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+.flag-badge.positive{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.flag-badge.neutral{background:rgba(126,151,180,.1);color:var(--muted);border:1px solid rgba(126,151,180,.25)}
+.flag-badge.at_risk{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
 .bar-wrap{display:flex;align-items:center;gap:6px}
 .bar{height:6px;border-radius:3px;flex-shrink:0}
 .bar-bg{width:70px;height:6px;background:rgba(51,65,85,.6);border-radius:3px;position:relative;overflow:hidden}
@@ -114,7 +123,8 @@ tbody td{padding:10px 14px;vertical-align:middle}
   font-family:var(--font);flex:1;max-width:280px}
 .pc-select2:focus{outline:none;border-color:var(--gold)}
 .pc-body{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.pc-left,.pc-right{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.pc-left,.pc-right{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px;box-shadow:var(--shadow)}
 /* Player header */
 .player-hdr{background:linear-gradient(135deg,#1e293b,#1e3a5f);border:1px solid var(--border);
   border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:20px}
@@ -152,7 +162,8 @@ tbody td{padding:10px 14px;vertical-align:middle}
 .metric-card .ml{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
 .metric-card .md{font-size:10px;color:var(--text3);margin-top:1px}
 /* Narrative */
-.narrative-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px}
+.narrative-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px 26px;box-shadow:var(--shadow)}
 .narrative-card h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
   letter-spacing:.7px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .narrative-card h4::before{content:'';display:inline-block;width:3px;height:14px;
@@ -167,6 +178,32 @@ tbody td{padding:10px 14px;vertical-align:middle}
 .quad-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
 .ql-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
 .ql-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── TOOLTIP SYSTEM ── */
+.has-tip{position:relative;cursor:help}
+/* Only use flex layout on non-table-cell elements */
+.has-tip:not(th){display:inline-flex;align-items:center;gap:4px}
+.tip-icon{font-size:9px;color:var(--muted);opacity:.65;font-style:normal;
+  border:1px solid var(--border2);border-radius:50%;width:13px;height:13px;
+  display:inline-flex;align-items:center;justify-content:center;font-weight:700;
+  flex-shrink:0;vertical-align:middle;margin-left:3px;line-height:1}
+.has-tip:hover .tip-icon{color:var(--blue);border-color:var(--blue);opacity:1}
+.has-tip::after{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 8px);left:50%;
+  transform:translateX(-50%) translateY(4px);
+  background:#0d1f38;color:var(--text2);font-size:11.5px;font-weight:400;
+  padding:9px 13px;border-radius:8px;border:1px solid var(--border2);
+  pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;
+  white-space:normal;line-height:1.55;z-index:500;
+  width:230px;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,.45);
+  letter-spacing:.01em;
+}
+.has-tip:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
+/* table headers: tooltip appears BELOW the header */
+thead th.has-tip::after{top:calc(100% + 6px);bottom:auto;left:0;transform:translateY(-4px);z-index:9999}
+thead th.has-tip:hover::after{transform:translateY(0)}
+
 /* ── THEME TOGGLE ── */
 .theme-toggle{
   margin-left:12px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
@@ -176,12 +213,14 @@ tbody td{padding:10px 14px;vertical-align:middle}
 .theme-toggle:hover{background:rgba(56,189,248,.2);border-color:var(--blue)}
 /* ── LIGHT MODE ── */
 body.light{
-  --bg:#f1f5f9;--card:#ffffff;--border:#e2e8f0;--border2:#cbd5e1;
-  --blue:#0284c7;--gold:#b45309;--green:#16a34a;--red:#dc2626;--muted:#64748b;
-  --text:#0f172a;--text2:#1e293b;--text3:#475569;
-  --pos:#16a34a;--neg:#dc2626;--neu:#64748b;
+  --bg:#f0f4f8;--card:#ffffff;--card2:#f8fafc;--border:#dde5ef;--border2:#b0c4d8;
+  --blue:#0284c7;--gold:#b45309;--green:#059669;--red:#dc2626;--muted:#5a7490;
+  --text:#0b1829;--text2:#1e3350;--text3:#5a7490;
+  --pos:#059669;--neg:#dc2626;--neu:#5a7490;
+  --shadow:0 2px 8px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-sm:0 1px 4px rgba(0,0,0,.07);
 }
-body.light .hdr{background:linear-gradient(135deg,#0f172a 0%,#1e40af 50%,#0f172a 100%)}
+body.light .hdr{background:linear-gradient(135deg,#0b1829 0%,#1d3461 50%,#0b1829 100%)}
 body.light select.fsel{background:#ffffff;color:#1e293b}
 body.light .pc-select{background:#f8fafc;color:#1e293b}
 body.light .pc-select2{background:#f8fafc;color:#1e293b}
@@ -308,19 +347,19 @@ thead th.sort-asc .sort-icon,thead th.sort-desc .sort-icon{opacity:1;color:var(-
     <table id="main-table">
       <thead>
         <tr id="tbl-head-row">
-          <th onclick="sortTable('perf_rank')" data-field="perf_rank"># <span class="sort-icon"></span></th>
-          <th onclick="sortTable('name')" data-field="name">Player <span class="sort-icon"></span></th>
-          <th onclick="sortTable('position')" data-field="position">Position <span class="sort-icon"></span></th>
-          <th onclick="sortTable('profile_flag')" data-field="profile_flag">Profile Flag <span class="sort-icon"></span></th>
-          <th onclick="sortTable('overall_sentiment')" data-field="overall_sentiment">Human Factor <span class="sort-icon"></span></th>
-          <th onclick="sortTable('adaptability')" data-field="adaptability">Adaptability <span class="sort-icon"></span></th>
-          <th onclick="sortTable('discipline_nlp')" data-field="discipline_nlp">Discipline <span class="sort-icon"></span></th>
-          <th onclick="sortTable('injury_nlp')" data-field="injury_nlp">Injury <span class="sort-icon"></span></th>
-          <th onclick="sortTable('behavioral')" data-field="behavioral">Behavioral <span class="sort-icon"></span></th>
-          <th onclick="sortTable('performance_score')" data-field="performance_score">Perf. Score <span class="sort-icon"></span></th>
-          <th onclick="sortTable('market_value')" data-field="market_value">Value €m <span class="sort-icon"></span></th>
-          <th onclick="sortTable('minutes')" data-field="minutes">Minutes <span class="sort-icon"></span></th>
-          <th onclick="sortTable('g_a')" data-field="g_a">G+A <span class="sort-icon"></span></th>
+          <th onclick="sortTable('perf_rank')" data-field="perf_rank" class="has-tip" data-tip="Overall performance ranking across the 25-player cohort, based on the composite FBref Performance Score."># <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('name')" data-field="name" class="has-tip" data-tip="Player name and current club.">Player <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('position')" data-field="position" class="has-tip" data-tip="Player's primary position as recorded in FBref for the 2024/25 season.">Position <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('profile_flag')" data-field="profile_flag" class="has-tip" data-tip="NLP-derived human factor risk classification. Positive ≥ +0.17 · At Risk ≤ −0.05 · Neutral in between.">Profile Flag <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('overall_sentiment')" data-field="overall_sentiment" class="has-tip" data-tip="Composite Human Factor Score (−1.0 to +1.0). Blends four NLP dimensions (85%) with overall VADER sentiment (15%).">Human Factor<br>Score <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('adaptability')" data-field="adaptability" class="has-tip" data-tip="NLP score measuring capacity to adapt to new clubs, managers, systems and external pressures. Source: Guardian articles + YouTube transcripts.">Adaptability <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('discipline_nlp')" data-field="discipline_nlp" class="has-tip" data-tip="NLP score reflecting behavioral consistency, absence of sanctions and regulatory compliance. Includes gambling bans, red cards, public incidents.">Discipline <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('injury_nlp')" data-field="injury_nlp" class="has-tip" data-tip="NLP score capturing severity and frequency of injury-related press coverage. Negative scores indicate recurring or serious physical issues.">Injury Hist. <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('behavioral')" data-field="behavioral" class="has-tip" data-tip="NLP score assessing off-field conduct, media dynamics, locker-room signals and emotional stability from both press and first-person sources.">Behavioral <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('performance_score')" data-field="performance_score" class="has-tip" data-tip="FBref composite score (0–100) combining availability, output & threat, shooting efficiency and defensive activity, weighted by position.">Perf. Score <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('market_value')" data-field="market_value" class="has-tip" data-tip="Transfermarkt estimated market value in €m as of the 2024/25 season.">Value €m <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('minutes')" data-field="minutes" class="has-tip" data-tip="Total minutes played in the Premier League 2024/25 season (FBref).">Minutes <span class="tip-icon">i</span><span class="sort-icon"></span></th>
+          <th onclick="sortTable('g_a')" data-field="g_a" class="has-tip" data-tip="Goals plus assists in the Premier League 2024/25 season (FBref).">G+A <span class="tip-icon">i</span><span class="sort-icon"></span></th>
         </tr>
       </thead>
       <tbody id="tbl-body"></tbody>
@@ -367,7 +406,7 @@ let isDark = true;
 
 // ── THEME COLORS (updated on toggle) ─────────────────────────────────
 const DARK_C  = {muted:'#94a3b8',grid:'rgba(51,65,85,.4)',border:'#334155',card:'#1e293b',border2:'#475569'};
-const LIGHT_C = {muted:'#64748b',grid:'rgba(203,213,225,.5)',border:'#e2e8f0',card:'#ffffff',border2:'#94a3b8'};
+const LIGHT_C = {muted:'#5a7490',grid:'rgba(176,196,216,.4)',border:'#dde5ef',card:'#ffffff',border2:'#b0c4d8'};
 let C = {...DARK_C};
 
 // ── INIT ──────────────────────────────────────────────────────────────
@@ -689,9 +728,15 @@ function renderPlayerCard(){
       ${dims.map(d=>{
         const v = p[d.key]; const cv = c ? c[d.key] : null;
         const col = dimColor(v);
+        const tips = {
+          'adaptability':'NLP score (−1 to +1) measuring capacity to adjust to new clubs, managers and systems. From VADER sentiment + keyword detection across press and YouTube.',
+          'discipline_nlp':'NLP score reflecting behavioral consistency and absence of sanctions. Captures gambling bans, red cards and conduct controversies.',
+          'injury_nlp':'NLP score from injury-related press coverage. Strongly negative = recurring or serious physical issues with documented availability impact.',
+          'behavioral':'NLP score assessing off-field conduct, media dynamics and emotional stability. Draws on first-person YouTube content and press coverage.'
+        };
         return `<div class="dim-row">
           <div class="dim-label">
-            <span class="dim-name">${d.icon} ${d.label}</span>
+            <span class="dim-name has-tip" data-tip="${tips[d.key]}">${d.icon} ${d.label} <span class="tip-icon">i</span></span>
             <span class="dim-val" style="color:${col}">${fmt(v)}${cv!==null?` <span style="color:${dimColor(cv)};font-size:10px">/ ${fmt(cv)}</span>`:''}</span>
           </div>
           <div class="dim-bar-bg">${barFill(v,d.key)}</div>
@@ -768,39 +813,39 @@ function renderPlayerCard(){
       </div>
       <div class="metric-card">
         <div class="mv" style="color:var(--green)">${p.g_a??'—'}</div>
-        <div class="ml">Goals + Assists</div>
+        <div class="ml has-tip" data-tip="Goals plus assists in the Premier League 2024/25 season (FBref). Direct output contribution regardless of position.">Goals + Assists <span class="tip-icon">i</span></div>
         <div class="md">xG/90: ${p.xg90?.toFixed(2)||'—'}</div>
       </div>
       <div class="metric-card">
         <div class="mv" style="color:var(--blue)">${p.xg90?.toFixed(2)||'—'}</div>
-        <div class="ml">xG per 90</div>
+        <div class="ml has-tip" data-tip="Expected goals per 90 minutes — measures attacking threat independently of finishing luck. npxG excludes penalties for a purer measure.">xG per 90 <span class="tip-icon">i</span></div>
         <div class="md">npxG: ${p.npxg90?.toFixed(2)||'—'}</div>
       </div>
       <div class="metric-card">
         <div class="mv" style="color:${p.cards90>0.3?'#f87171':p.cards90>0.15?'#fbbf24':'#4ade80'}">${p.cards90?.toFixed(2)||'—'}</div>
-        <div class="ml">Cards per 90</div>
+        <div class="ml has-tip" data-tip="Yellow and red cards combined per 90 minutes. >0.30 = disciplinary concern. <0.10 = clean disciplinary profile.">Cards per 90 <span class="tip-icon">i</span></div>
         <div class="md">Y:${p.yellow_cards||0} R:${p.red_cards||0}</div>
       </div>
     </div>
     <h4 style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px">Sub-scores breakdown</h4>
     ${[
-      {label:'Availability Score',val:p.availability_score,max:100,color:'#38bdf8'},
-      {label:'Output & Threat',val:p.output_threat_score,max:100,color:'#a78bfa'},
-      {label:'Shooting Efficiency',val:Math.max(0,p.shooting_efficiency),max:100,color:'#34d399'},
-      {label:'Defensive Activity',val:Math.min(p.defensive_activity,100),max:100,color:'#fb923c'},
+      {label:'Availability Score',tip:'% of possible minutes played, adjusted for injuries and suspensions.',val:p.availability_score,max:100,color:'#38bdf8'},
+      {label:'Output &amp; Threat',tip:'Goals, assists and xG contribution normalised against position benchmarks.',val:p.output_threat_score,max:100,color:'#a78bfa'},
+      {label:'Shooting Efficiency',tip:'Conversion rate vs xG expectations. Negative values (shown as 0) indicate underperformance vs statistical baseline.',val:Math.max(0,p.shooting_efficiency),max:100,color:'#34d399'},
+      {label:'Defensive Activity',tip:'Pressures, tackles and interceptions per 90, normalised by position. Displayed capped at 100.',val:Math.min(p.defensive_activity,100),max:100,color:'#fb923c'},
     ].map(s=>`
       <div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:12px;color:var(--text2)">${s.label}</span>
+          <span class="has-tip" data-tip="${s.tip}" style="font-size:12px;color:var(--text2)">${s.label} <span class="tip-icon">i</span></span>
           <span style="font-size:12px;font-weight:700;color:${s.color}">${s.val?.toFixed(1)||'—'}</span>
         </div>
-        <div class="bar-bg" style="width:100%;height:8px;background:rgba(51,65,85,.6);border-radius:4px;position:relative;overflow:hidden">
+        <div class="bar-bg" style="width:100%;height:8px;background:rgba(37,53,81,.7);border-radius:4px;position:relative;overflow:hidden">
           <div style="position:absolute;left:0;top:0;height:100%;width:${Math.min(100,(s.val||0)/s.max*100)}%;background:${s.color};border-radius:4px"></div>
         </div>
       </div>`).join('')}
-    ${p.perf_flag&&p.perf_flag!=='OK'?`<div style="margin-top:12px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;font-size:11px;color:#fbbf24">⚠ ${p.perf_flag}</div>`:''}`;
+    ${p.perf_flag&&p.perf_flag!=='OK'?`<div style="margin-top:12px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;font-size:11px;color:#fbbf24">&#9888; ${p.perf_flag}</div>`:''}`;
 
-  // ── Narrative ──
+  // -- Narrative --
   const narEl = document.getElementById('pc-narrative');
   const recStart = p.narrative.indexOf('Recruitment implication:');
   const mainText = recStart>=0 ? p.narrative.substring(0,recStart) : p.narrative;
