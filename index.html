@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Football Recruitment Intelligence Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a;--card:#1e293b;--border:#334155;--border2:#475569;
+  --blue:#38bdf8;--gold:#fbbf24;--green:#4ade80;--red:#f87171;--muted:#94a3b8;
+  --text:#f1f5f9;--text2:#cbd5e1;--text3:#94a3b8;
+  --pos:#4ade80;--neg:#f87171;--neu:#94a3b8;
+  --font:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);
+  border-bottom:1px solid var(--border);padding:18px 28px;display:flex;align-items:center;gap:16px}
+.hdr-logo{width:44px;height:44px;background:linear-gradient(135deg,var(--blue),var(--gold));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.hdr-text h1{font-size:18px;font-weight:700;letter-spacing:.3px;color:var(--text)}
+.hdr-text p{font-size:12px;color:var(--muted);margin-top:2px}
+.hdr-badge{margin-left:auto;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);
+  color:var(--blue);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+/* ── NAV ── */
+.nav{display:flex;gap:0;padding:0 28px;background:var(--card);border-bottom:1px solid var(--border)}
+.nav-btn{padding:14px 24px;font-size:13px;font-weight:600;color:var(--muted);
+  background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;
+  transition:all .2s;letter-spacing:.3px}
+.nav-btn:hover{color:var(--text2)}
+.nav-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* ── SECTION ── */
+.section{display:none;padding:24px 28px;max-width:1700px;margin:0 auto}
+.section.active{display:block}
+/* ── FILTERS ── */
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px}
+.filter-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-right:4px}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--border2);background:transparent;color:var(--muted);transition:all .2s}
+.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill.active-pill{background:rgba(56,189,248,.15);border-color:var(--blue);color:var(--blue)}
+.pill.pos.active-pill{background:rgba(74,222,128,.15);border-color:var(--green);color:var(--green)}
+.pill.neu.active-pill{background:rgba(148,163,184,.15);border-color:var(--muted);color:var(--muted)}
+.pill.risk.active-pill{background:rgba(248,113,113,.15);border-color:var(--red);color:var(--red)}
+.filter-sep{width:1px;height:30px;background:var(--border);flex-shrink:0}
+select.fsel{background:var(--card);color:var(--text2);border:1.5px solid var(--border2);
+  border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:var(--font)}
+select.fsel:focus{outline:none;border-color:var(--blue)}
+.filter-reset{margin-left:auto;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;
+  color:var(--muted);background:transparent;border:1.5px solid var(--border);cursor:pointer}
+.filter-reset:hover{border-color:var(--blue);color:var(--blue)}
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.stat-card .sv{font-size:28px;font-weight:800;line-height:1}
+.stat-card .sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
+.stat-card .sd{font-size:12px;color:var(--text3);margin-top:2px}
+.sv.blue{color:var(--blue)}.sv.green{color:var(--green)}.sv.gold{color:var(--gold)}.sv.red{color:var(--red)}
+/* ── CHART ROW ── */
+.chart-row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.chart-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:4px}
+.chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-wrap{position:relative}
+/* ── TABLE ── */
+.tbl-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.tbl-header h3{font-size:13px;font-weight:700;color:var(--text2)}
+.tbl-count{font-size:12px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:10px 14px;text-align:left;color:var(--muted);font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);
+  cursor:pointer;user-select:none;white-space:nowrap;background:var(--card)}
+thead th:hover{color:var(--blue)}
+thead th .sort-icon{margin-left:4px;opacity:.4}
+thead th.sorted .sort-icon{opacity:1;color:var(--blue)}
+tbody tr{border-bottom:1px solid rgba(51,65,85,.5);cursor:pointer;transition:background .15s}
+tbody tr:hover{background:rgba(56,189,248,.05)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:10px 14px;vertical-align:middle}
+.p-name{font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.p-club{color:var(--muted);font-size:11px}
+.p-pos{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;
+  background:rgba(148,163,184,.12);color:var(--muted)}
+.flag-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;
+  font-size:11px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.flag-badge.positive{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.flag-badge.neutral{background:rgba(148,163,184,.12);color:var(--muted);border:1px solid rgba(148,163,184,.25)}
+.flag-badge.at_risk{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.bar-wrap{display:flex;align-items:center;gap:6px}
+.bar{height:6px;border-radius:3px;flex-shrink:0}
+.bar-bg{width:70px;height:6px;background:rgba(51,65,85,.6);border-radius:3px;position:relative;overflow:hidden}
+.bar-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;transition:width .3s}
+.bar-val{font-size:11px;color:var(--text2);min-width:32px}
+.hf-score{font-size:13px;font-weight:700}
+.hf-score.pos{color:var(--green)}.hf-score.neg{color:var(--red)}.hf-score.neu{color:var(--muted)}
+/* ── PLAYER CARD ── */
+.pc-controls{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pc-controls label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.pc-select{background:#0f172a;color:var(--text);border:1.5px solid var(--border2);
+  border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;
+  font-family:var(--font);flex:1;max-width:280px}
+.pc-select:focus{outline:none;border-color:var(--blue)}
+.compare-sep{color:var(--muted);font-size:12px}
+.pc-select2{background:#0f172a;color:var(--text2);border:1.5px solid var(--border);
+  border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;
+  font-family:var(--font);flex:1;max-width:280px}
+.pc-select2:focus{outline:none;border-color:var(--gold)}
+.pc-body{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.pc-left,.pc-right{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+/* Player header */
+.player-hdr{background:linear-gradient(135deg,#1e293b,#1e3a5f);border:1px solid var(--border);
+  border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:20px}
+.player-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;
+  border:3px solid rgba(56,189,248,.3)}
+.player-info h2{font-size:22px;font-weight:800;color:var(--text)}
+.player-info .pi-sub{display:flex;gap:10px;align-items:center;margin-top:4px;flex-wrap:wrap}
+.pi-tag{font-size:12px;color:var(--muted)}
+.pi-dot{color:var(--border2)}
+.player-hdr-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.big-flag{padding:6px 16px;border-radius:16px;font-size:13px;font-weight:800;letter-spacing:.5px}
+.big-flag.positive{background:rgba(74,222,128,.2);color:var(--green);border:1.5px solid rgba(74,222,128,.5)}
+.big-flag.neutral{background:rgba(148,163,184,.15);color:var(--muted);border:1.5px solid rgba(148,163,184,.4)}
+.big-flag.at_risk{background:rgba(248,113,113,.2);color:var(--red);border:1.5px solid rgba(248,113,113,.5)}
+.hdr-scores{display:flex;gap:16px}
+.hdr-score-item{text-align:right}
+.hdr-score-item .hsv{font-size:20px;font-weight:800}
+.hdr-score-item .hsl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+/* Dimension bars on player card */
+.dim-section h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.7px;margin-bottom:14px}
+.dim-row{margin-bottom:12px}
+.dim-label{display:flex;justify-content:space-between;margin-bottom:5px}
+.dim-name{font-size:12px;font-weight:600;color:var(--text2)}
+.dim-val{font-size:12px;font-weight:700}
+.dim-bar-bg{height:8px;background:rgba(51,65,85,.6);border-radius:4px;overflow:hidden;position:relative}
+.dim-bar-center{position:absolute;left:50%;top:0;height:100%;width:1px;background:rgba(148,163,184,.3)}
+.dim-bar-fill{position:absolute;height:100%;border-radius:4px}
+/* Metric cards */
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.metric-card{background:rgba(15,23,42,.5);border:1px solid var(--border);border-radius:8px;
+  padding:12px;text-align:center}
+.metric-card .mv{font-size:20px;font-weight:800;color:var(--blue)}
+.metric-card .ml{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.metric-card .md{font-size:10px;color:var(--text3);margin-top:1px}
+/* Narrative */
+.narrative-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px}
+.narrative-card h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.7px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.narrative-card h4::before{content:'';display:inline-block;width:3px;height:14px;
+  background:var(--blue);border-radius:2px}
+.narrative-text{font-size:13px;color:var(--text2);line-height:1.7;
+  border-left:3px solid var(--border2);padding-left:14px}
+.narrative-text em{color:var(--blue);font-style:normal;font-weight:600}
+.source-tags{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.source-tag{display:flex;align-items:center;gap:5px;background:rgba(51,65,85,.4);
+  border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--muted)}
+/* Quadrant legend */
+.quad-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.ql-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.ql-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* ── THEME TOGGLE ── */
+.theme-toggle{
+  margin-left:12px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1.5px solid rgba(56,189,248,.4);background:rgba(56,189,248,.1);
+  color:var(--blue);transition:all .25s;white-space:nowrap;flex-shrink:0;
+}
+.theme-toggle:hover{background:rgba(56,189,248,.2);border-color:var(--blue)}
+/* ── LIGHT MODE ── */
+body.light{
+  --bg:#f1f5f9;--card:#ffffff;--border:#e2e8f0;--border2:#cbd5e1;
+  --blue:#0284c7;--gold:#b45309;--green:#16a34a;--red:#dc2626;--muted:#64748b;
+  --text:#0f172a;--text2:#1e293b;--text3:#475569;
+  --pos:#16a34a;--neg:#dc2626;--neu:#64748b;
+}
+body.light .hdr{background:linear-gradient(135deg,#0f172a 0%,#1e40af 50%,#0f172a 100%)}
+body.light select.fsel{background:#ffffff;color:#1e293b}
+body.light .pc-select{background:#f8fafc;color:#1e293b}
+body.light .pc-select2{background:#f8fafc;color:#1e293b}
+body.light tbody tr:hover{background:rgba(2,132,199,.06)}
+body.light .metric-card{background:rgba(241,245,249,.8)}
+body.light .pill{border-color:#cbd5e1;color:#64748b}
+body.light .pill:hover{border-color:#0284c7;color:#0284c7}
+/* ── SORT HEADERS ── */
+thead th{transition:color .15s}
+thead th.sort-asc .sort-icon::after{content:'↑'}
+thead th.sort-desc .sort-icon::after{content:'↓'}
+thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'↕'}
+.sort-icon{font-style:normal;opacity:.45;font-size:10px;margin-left:3px}
+thead th.sort-asc .sort-icon,thead th.sort-desc .sort-icon{opacity:1;color:var(--blue)}
+/* responsive */
+@media(max-width:900px){
+  .chart-row{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .pc-body{grid-template-columns:1fr}
+  .hdr-scores{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">⚽</div>
+  <div class="hdr-text">
+    <h1>Football Recruitment Intelligence Dashboard</h1>
+    <p>Integrating Human Factors into Data-Driven Player Recruitment · Premier League 2024/25</p>
+  </div>
+  <div class="hdr-badge">TFM Research · 25 Players</div>
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀ Light mode</button>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('overview',this)">Overview &amp; Comparison</button>
+  <button class="nav-btn" onclick="showSection('playercard',this)">Player Profile Card</button>
+</div>
+
+<!-- ════════════════ SECTION 1: OVERVIEW ════════════════ -->
+<div id="sec-overview" class="section active">
+
+  <!-- Filters -->
+  <div class="filters">
+    <span class="filter-label">Profile</span>
+    <div class="filter-pills">
+      <button class="pill active-pill" id="f-all" onclick="setFlagFilter('all')">All</button>
+      <button class="pill pos" id="f-positive" onclick="setFlagFilter('positive')">✦ Positive</button>
+      <button class="pill neu" id="f-neutral" onclick="setFlagFilter('neutral')">◆ Neutral</button>
+      <button class="pill risk" id="f-at_risk" onclick="setFlagFilter('at_risk')">⚠ At Risk</button>
+    </div>
+    <div class="filter-sep"></div>
+    <span class="filter-label">Position</span>
+    <select class="fsel" id="f-pos" onchange="applyFilters()">
+      <option value="all">All positions</option>
+      <option value="Forward">Forward</option>
+      <option value="Winger">Winger</option>
+      <option value="Midfielder">Midfielder</option>
+      <option value="Defender">Defender</option>
+      <option value="Goalkeeper">Goalkeeper</option>
+    </select>
+    <div class="filter-sep"></div>
+    <span class="filter-label">Club</span>
+    <select class="fsel" id="f-club" onchange="applyFilters()">
+      <option value="all">All clubs</option>
+    </select>
+    <button class="filter-reset" onclick="resetFilters()">↺ Reset</button>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="sv blue" id="stat-total">25</div>
+      <div class="sl">Players in shortlist</div>
+      <div class="sd">Premier League 2024/25</div>
+    </div>
+    <div class="stat-card">
+      <div class="sv green" id="stat-pos">14</div>
+      <div class="sl">Positive profile</div>
+      <div class="sd">Low human-factor risk</div>
+    </div>
+    <div class="stat-card">
+      <div class="sv" style="color:var(--muted)" id="stat-neu">7</div>
+      <div class="sl">Neutral profile</div>
+      <div class="sd">Mixed signals, monitor</div>
+    </div>
+    <div class="stat-card">
+      <div class="sv red" id="stat-risk">4</div>
+      <div class="sl">At-risk profile</div>
+      <div class="sd">Adverse signals documented</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-title">Human Factor Score vs Performance Score</div>
+      <div class="chart-sub">Bubble size = Market Value (€m) · Colour = Profile Flag · Click a player to open their profile card</div>
+      <div class="chart-wrap" style="height:340px"><canvas id="scatterChart"></canvas></div>
+      <div class="quad-legend">
+        <div class="ql-item"><div class="ql-dot" style="background:#4ade80"></div>Positive profile</div>
+        <div class="ql-item"><div class="ql-dot" style="background:#94a3b8"></div>Neutral profile</div>
+        <div class="ql-item"><div class="ql-dot" style="background:#f87171"></div>At-risk profile</div>
+        <div class="ql-item"><div class="ql-dot" style="background:#fbbf24"></div>Highlighted on hover</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Human Factor Dimension Averages</div>
+      <div class="chart-sub">Average NLP scores across filtered players (-1.0 to +1.0)</div>
+      <div class="chart-wrap" style="height:340px"><canvas id="dimChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-card">
+    <div class="tbl-header">
+      <h3>Player Shortlist</h3>
+      <span class="tbl-count" id="tbl-count">25 players</span>
+    </div>
+    <div class="tbl-wrap">
+    <table id="main-table">
+      <thead>
+        <tr id="tbl-head-row">
+          <th onclick="sortTable('perf_rank')" data-field="perf_rank"># <span class="sort-icon"></span></th>
+          <th onclick="sortTable('name')" data-field="name">Player <span class="sort-icon"></span></th>
+          <th onclick="sortTable('position')" data-field="position">Position <span class="sort-icon"></span></th>
+          <th onclick="sortTable('profile_flag')" data-field="profile_flag">Profile Flag <span class="sort-icon"></span></th>
+          <th onclick="sortTable('overall_sentiment')" data-field="overall_sentiment">Human Factor <span class="sort-icon"></span></th>
+          <th onclick="sortTable('adaptability')" data-field="adaptability">Adaptability <span class="sort-icon"></span></th>
+          <th onclick="sortTable('discipline_nlp')" data-field="discipline_nlp">Discipline <span class="sort-icon"></span></th>
+          <th onclick="sortTable('injury_nlp')" data-field="injury_nlp">Injury <span class="sort-icon"></span></th>
+          <th onclick="sortTable('behavioral')" data-field="behavioral">Behavioral <span class="sort-icon"></span></th>
+          <th onclick="sortTable('performance_score')" data-field="performance_score">Perf. Score <span class="sort-icon"></span></th>
+          <th onclick="sortTable('market_value')" data-field="market_value">Value €m <span class="sort-icon"></span></th>
+          <th onclick="sortTable('minutes')" data-field="minutes">Minutes <span class="sort-icon"></span></th>
+          <th onclick="sortTable('g_a')" data-field="g_a">G+A <span class="sort-icon"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tbl-body"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SECTION 2: PLAYER CARD ════════════════ -->
+<div id="sec-playercard" class="section">
+
+  <!-- Selectors -->
+  <div class="pc-controls">
+    <label>Primary player</label>
+    <select class="pc-select" id="sel-player" onchange="renderPlayerCard()"></select>
+    <div class="compare-sep">vs</div>
+    <label>Compare with</label>
+    <select class="pc-select2" id="sel-compare" onchange="renderPlayerCard()">
+      <option value="">— no comparison —</option>
+    </select>
+  </div>
+
+  <!-- Player header -->
+  <div class="player-hdr" id="pc-header"></div>
+
+  <!-- Card body -->
+  <div class="pc-body">
+    <div class="pc-left" id="pc-radar-col"></div>
+    <div class="pc-right" id="pc-metrics-col"></div>
+  </div>
+
+  <!-- Narrative -->
+  <div class="narrative-card" id="pc-narrative"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const PLAYERS = [{"name": "Erling Haaland", "nlp_name": "Erling Haaland", "club": "Manchester City", "position": "Centre-Forward", "position_cat": "Forward", "age": 25, "market_value": 200, "contract_expires": "30/06/2034", "minutes": 2863, "g_a": 34, "xg90": 0.82, "npxg90": 0.75, "cards90": 0.06, "performance_score": 77.81, "value_efficiency": 0.39, "perf_rank": 1, "perf_flag": "OK", "availability_score": 95.17, "output_threat_score": 91.32, "shooting_efficiency": 81.44, "defensive_activity": 1.42, "yellow_cards": 2, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.307, "adaptability": 0.377, "discipline_nlp": 0.188, "injury_nlp": 0.143, "behavioral": 0.431, "guardian_articles": "29", "youtube_transcripts": "1", "weighting": "50_50", "narrative": "Haaland's Guardian profile is defined by historic Premier League goal-scoring records with consistent praise of his physical excellence and finishing precision. YouTube transcripts portray a grounded, focused competitor with clear professional standards. Both sources strongly align. Minor late-season injury mentions are isolated and non-recurring. Recruitment implication: generational striker profile with elite consistency and no material off-field risk."}, {"name": "Ollie Watkins", "nlp_name": "Ollie Watkins", "club": "Aston Villa", "position": "Centre-Forward", "position_cat": "Forward", "age": 30, "market_value": 30, "contract_expires": "30/06/2028", "minutes": 2749, "g_a": 17, "xg90": 0.46, "npxg90": 0.42, "cards90": 0.13, "performance_score": 61.13, "value_efficiency": 2.04, "perf_rank": 2, "perf_flag": "OK", "availability_score": 88.41, "output_threat_score": 53.05, "shooting_efficiency": 78.1, "defensive_activity": 2.42, "yellow_cards": 4, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.275, "adaptability": 0.249, "discipline_nlp": 0.306, "injury_nlp": 0.224, "behavioral": 0.053, "guardian_articles": "28", "youtube_transcripts": "5", "weighting": "50_50", "narrative": "Watkins' Guardian coverage consistently praises his pressing intensity, movement quality, and landmark England recognition from Aston Villa. YouTube transcripts portray a humble, team-focused personality who emphasises collective growth. Both sources strongly align. No adverse signals detected. Recruitment implication: elite pressing striker with exceptional professional standards and proven Premier League consistency."}, {"name": "Nicolas Jackson", "nlp_name": "Nicolas Jackson", "club": "Chelsea", "position": "Centre-Forward", "position_cat": "Forward", "age": 24, "market_value": 40, "contract_expires": "30/06/2026", "minutes": 2400, "g_a": 15, "xg90": 0.9, "npxg90": 0.82, "cards90": 0.04, "performance_score": 60.82, "value_efficiency": 1.52, "perf_rank": 3, "perf_flag": "OK", "availability_score": 80.6, "output_threat_score": 59.49, "shooting_efficiency": 64.76, "defensive_activity": 1.08, "yellow_cards": 1, "red_cards": 0, "profile_flag": "at_risk", "overall_sentiment": -0.161, "adaptability": -0.157, "discipline_nlp": -0.382, "injury_nlp": -0.352, "behavioral": 0.008, "guardian_articles": "19", "youtube_transcripts": "0", "weighting": "guardian_only", "narrative": "Jackson's Guardian coverage at Chelsea combines notable scoring contributions with documented early-season disciplinary concerns including yellow card accumulation and decision-making criticism. Overall press tone improves across the season. No valid YouTube transcripts available for first-person context. Recruitment implication: high-potential striker with discipline monitoring required but exhibiting a broadly positive developmental trajectory."}, {"name": "Dominic Calvert-Lewin", "nlp_name": "Dominic Calvert Lewin", "club": "Leeds United", "position": "Centre-Forward", "position_cat": "Forward", "age": 29, "market_value": 22, "contract_expires": "30/06/2028", "minutes": 2563, "g_a": 14, "xg90": 0.46, "npxg90": 0.42, "cards90": 0.07, "performance_score": 56.37, "value_efficiency": 2.56, "perf_rank": 4, "perf_flag": "OK", "availability_score": 81.96, "output_threat_score": 47.06, "shooting_efficiency": 64.81, "defensive_activity": 1.01, "yellow_cards": 2, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": -0.012, "adaptability": 0.259, "discipline_nlp": -0.232, "injury_nlp": -0.28, "behavioral": -0.037, "guardian_articles": "27", "youtube_transcripts": "7", "weighting": "50_50", "narrative": "Calvert-Lewin's Guardian profile is dominated by a persistent multi-season injury narrative covering hamstring and knee setbacks that repeatedly limited his availability and consistency. YouTube transcripts reflect a resilient personality, but the physical unavailability theme is the defining signal. No YouTube transcripts cover this period independently. Recruitment implication: significant injury reliability risk requiring independent medical assessment before any commitment."}, {"name": "Bruno Fernandes", "nlp_name": "Bruno Fernandes", "club": "Manchester Utd", "position": "Attacking Midfielder", "position_cat": "Midfielder", "age": 31, "market_value": 40, "contract_expires": "30/06/2027", "minutes": 2883, "g_a": 27, "xg90": 0.25, "npxg90": 0.23, "cards90": 0.16, "performance_score": 54.57, "value_efficiency": 1.36, "perf_rank": 5, "perf_flag": "OK", "availability_score": 97.1, "output_threat_score": 39.92, "shooting_efficiency": 28.49, "defensive_activity": 6.91, "yellow_cards": 5, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.284, "adaptability": 0.294, "discipline_nlp": 0.162, "injury_nlp": 0.329, "behavioral": -0.089, "guardian_articles": "28", "youtube_transcripts": "6", "weighting": "50_50", "narrative": "Fernandes' coverage is defined by his captaincy of Manchester United and consistent recognition of his leadership and work ethic across multiple managers. Guardian articles and YouTube transcripts converge on a highly driven, emotionally articulate personality. No significant disciplinary or behavioral incidents. Both sources align strongly. Recruitment implication: a proven leader in elite high-pressure environments."}, {"name": "Matheus Cunha", "nlp_name": "Matheus Cunha", "club": "Manchester Utd", "position": "Centre-Forward", "position_cat": "Forward", "age": 26, "market_value": 70, "contract_expires": "30/06/2030", "minutes": 2415, "g_a": 11, "xg90": 0.34, "npxg90": 0.31, "cards90": 0.15, "performance_score": 52.82, "value_efficiency": 0.75, "perf_rank": 6, "perf_flag": "OK", "availability_score": 79.72, "output_threat_score": 42.88, "shooting_efficiency": 52.6, "defensive_activity": 6.71, "yellow_cards": 4, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.354, "adaptability": 0.461, "discipline_nlp": 0.058, "injury_nlp": 0.285, "behavioral": 0.476, "guardian_articles": "19", "youtube_transcripts": "4", "weighting": "50_50", "narrative": "Cunha's Guardian coverage documents strong individual evolution at Wolverhampton, consistently praising his direct style and growing impact. YouTube transcripts reveal a passionate, expressive player who articulates genuine affection for the club and supporters. Both sources converge positively. Minor disciplinary mentions are insufficient to define the overall profile. Recruitment implication: compelling value proposition with strong adaptability and positive behavioral signals."}, {"name": "Richarlison", "nlp_name": "Richarlison", "club": "Tottenham Hotspur", "position": "Centre-Forward", "position_cat": "Forward", "age": 29, "market_value": 28, "contract_expires": "30/06/2027", "minutes": 1802, "g_a": 14, "xg90": 0.5, "npxg90": 0.46, "cards90": 0.25, "performance_score": 50.8, "value_efficiency": 1.81, "perf_rank": 7, "perf_flag": "OK", "availability_score": 51.48, "output_threat_score": 59.55, "shooting_efficiency": 76.78, "defensive_activity": 4.51, "yellow_cards": 5, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": 0.011, "adaptability": -0.386, "discipline_nlp": 0.306, "injury_nlp": -0.22, "behavioral": -0.15, "guardian_articles": "13", "youtube_transcripts": "1", "weighting": "50_50", "narrative": "Richarlison's Guardian profile at Tottenham combines documented injury disruptions with emotional behavioral incidents, alongside genuine technical quality. YouTube transcripts show an expressive player addressing adversity openly. Both sources acknowledge instability alongside clear talent. Injury and behavioral dimensions both carry meaningful risk signals. Recruitment implication: talented but complex profile requiring holistic physical and psychological assessment before commitment."}, {"name": "Casemiro", "nlp_name": "Casemiro", "club": "Manchester Utd", "position": "Defensive Midfielder", "position_cat": "Midfielder", "age": 34, "market_value": 8, "contract_expires": "30/06/2026", "minutes": 2491, "g_a": 11, "xg90": 0.32, "npxg90": 0.29, "cards90": 0.47, "performance_score": 50.55, "value_efficiency": 6.32, "perf_rank": 8, "perf_flag": "OK", "availability_score": 86.21, "output_threat_score": 36.4, "shooting_efficiency": 74.31, "defensive_activity": 11.09, "yellow_cards": 10, "red_cards": 1, "profile_flag": "positive", "overall_sentiment": 0.21, "adaptability": 0.313, "discipline_nlp": -0.164, "injury_nlp": 0.137, "behavioral": 0.41, "guardian_articles": "22", "youtube_transcripts": "5", "weighting": "50_50", "narrative": "Casemiro's Guardian coverage documents a steep decline at Manchester United, with articles reporting tactical marginalisation and open transfer availability, compounded by a serious hamstring injury. YouTube transcripts, partly recorded post-departure, reflect confidence in his career legacy. Sources partially diverge in tone. Recruitment implication: historical elite quality significantly offset by recent form, age, and injury concerns requiring comprehensive reassessment."}, {"name": "Declan Rice", "nlp_name": "Declan Rice", "club": "Arsenal", "position": "Central Midfielder", "position_cat": "Midfielder", "age": 27, "market_value": 120, "contract_expires": "30/06/2028", "minutes": 3004, "g_a": 9, "xg90": 0.12, "npxg90": 0.11, "cards90": 0.09, "performance_score": 50.33, "value_efficiency": 0.42, "perf_rank": 9, "perf_flag": "OK", "availability_score": 98.59, "output_threat_score": 17.93, "shooting_efficiency": 47.79, "defensive_activity": 7.71, "yellow_cards": 3, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.253, "adaptability": 0.342, "discipline_nlp": -0.078, "injury_nlp": 0.179, "behavioral": 0.393, "guardian_articles": "28", "youtube_transcripts": "2", "weighting": "50_50", "narrative": "Rice's Guardian coverage highlights his rapid establishment as Arsenal's midfield leader following a record transfer, with consistent praise for his defensive intensity and captaincy quality. YouTube transcripts confirm a settled, highly motivated competitor. Both sources align positively throughout. No significant adverse signals detected. Recruitment implication: proven adaptability and elite professionalism at the highest level."}, {"name": "Mohamed Salah", "nlp_name": "Mohamed Salah", "club": "Liverpool", "position": "Right Winger", "position_cat": "Winger", "age": 33, "market_value": 30, "contract_expires": "30/06/2027", "minutes": 2073, "g_a": 13, "xg90": 0.3, "npxg90": 0.27, "cards90": 0.04, "performance_score": 48.82, "value_efficiency": 1.63, "perf_rank": 10, "perf_flag": "OK", "availability_score": 70.11, "output_threat_score": 39.72, "shooting_efficiency": 42.05, "defensive_activity": 2.68, "yellow_cards": 1, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": 0.142, "adaptability": 0.085, "discipline_nlp": 0.11, "injury_nlp": 0.194, "behavioral": -0.25, "guardian_articles": "26", "youtube_transcripts": "3", "weighting": "50_50", "narrative": "Salah's profile balances sustained elite performance at Liverpool against a documented contractual dispute, most notably his public statement that someone does not want him at the club. Guardian articles capture both the goal contributions and the interpersonal tensions. YouTube transcripts include highly emotional first-person content that amplifies the behavioral dimension. Sources partially diverge. Recruitment implication: elite performer whose off-field relationship dynamics and expectations require careful contractual and interpersonal due diligence."}, {"name": "Bukayo Saka", "nlp_name": "Bukayo Saka", "club": "Arsenal", "position": "Right Winger", "position_cat": "Winger", "age": 24, "market_value": 120, "contract_expires": "30/06/2030", "minutes": 2132, "g_a": 11, "xg90": 0.3, "npxg90": 0.27, "cards90": 0.08, "performance_score": 48.69, "value_efficiency": 0.41, "perf_rank": 11, "perf_flag": "OK", "availability_score": 69.25, "output_threat_score": 39.12, "shooting_efficiency": 49.23, "defensive_activity": 5.17, "yellow_cards": 2, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.209, "adaptability": 0.25, "discipline_nlp": 0.089, "injury_nlp": -0.006, "behavioral": 0.388, "guardian_articles": "28", "youtube_transcripts": "3", "weighting": "50_50", "narrative": "Saka's Guardian profile documents sustained excellence at Arsenal and England, with consistent praise for his resilience and technical creativity. YouTube transcripts reveal a grounded, mature personality who frames adversity constructively. Discipline and behavioral dimensions are exemplary. Both sources converge strongly positively. Recruitment implication: one of the safest and highest-ceiling profiles in this entire cohort."}, {"name": "Cole Palmer", "nlp_name": "Cole Palmer", "club": "Chelsea", "position": "Attacking Midfielder", "position_cat": "Midfielder", "age": 24, "market_value": 110, "contract_expires": "30/06/2033", "minutes": 1777, "g_a": 10, "xg90": 0.46, "npxg90": 0.42, "cards90": 0.2, "performance_score": 47.59, "value_efficiency": 0.43, "perf_rank": 12, "perf_flag": "OK", "availability_score": 66.49, "output_threat_score": 45.02, "shooting_efficiency": 42.19, "defensive_activity": 4.98, "yellow_cards": 4, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": 0.164, "adaptability": 0.361, "discipline_nlp": -0.281, "injury_nlp": 0.179, "behavioral": 0.163, "guardian_articles": "26", "youtube_transcripts": "1", "weighting": "50_50", "narrative": "Palmer's Guardian coverage documents a breakout Chelsea season with consistent elite praise for his intelligence and creative productivity following his departure from Manchester City. YouTube transcripts portray a grounded, composed player who attributes success to hard work. Both sources strongly align. No injury or disciplinary concerns. Recruitment implication: elite creative profile in peak form with no material risk signals."}, {"name": "Phil Foden", "nlp_name": "Phil Foden", "club": "Manchester City", "position": "Attacking Midfielder", "position_cat": "Midfielder", "age": 25, "market_value": 80, "contract_expires": "30/06/2027", "minutes": 1961, "g_a": 12, "xg90": 0.32, "npxg90": 0.29, "cards90": 0.18, "performance_score": 46.59, "value_efficiency": 0.58, "perf_rank": 13, "perf_flag": "OK", "availability_score": 60.7, "output_threat_score": 42.05, "shooting_efficiency": 57.62, "defensive_activity": 4.89, "yellow_cards": 4, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.204, "adaptability": 0.343, "discipline_nlp": 0.063, "injury_nlp": 0.188, "behavioral": 0.158, "guardian_articles": "25", "youtube_transcripts": "3", "weighting": "50_50", "narrative": "Foden's Guardian profile reflects continued individual excellence at Manchester City including award recognition and consistent decisive contributions. YouTube transcripts portray a quietly confident player proud of his progressive development. Both sources strongly align. An early personal incident in limited articles does not define the overall profile. Recruitment implication: elite technical talent with strong professional trajectory and low off-field risk."}, {"name": "Emiliano Martinez", "nlp_name": "Emiliano Martinez", "club": "Aston Villa", "position": "Goalkeeper", "position_cat": "Goalkeeper", "age": 33, "market_value": 15, "contract_expires": "30/06/2029", "minutes": 2835, "g_a": 1, "xg90": 0, "npxg90": 0, "cards90": 0.06, "performance_score": 43.11, "value_efficiency": 2.87, "perf_rank": 14, "perf_flag": "Limited: GK-specific metrics not included", "availability_score": 95.95, "output_threat_score": 0.74, "shooting_efficiency": -17.44, "defensive_activity": 0.0, "yellow_cards": 2, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": 0.018, "adaptability": 0.32, "discipline_nlp": -0.282, "injury_nlp": 0.113, "behavioral": -0.3, "guardian_articles": "15", "youtube_transcripts": "3", "weighting": "50_50", "narrative": "Martinez's profile juxtaposes elite goalkeeping with a documented behavioral controversy following Argentina's World Cup celebrations, including a formal FA investigation referenced in multiple Guardian articles. YouTube transcripts oscillate between combative pride and emotional openness. Press and YouTube sources diverge in tone. Recruitment implication: world-class ability with a behavioral risk profile requiring active management and clear conduct expectations."}, {"name": "Moises Caicedo", "nlp_name": "Moises Caicedo", "club": "Chelsea", "position": "Defensive Midfielder", "position_cat": "Midfielder", "age": 24, "market_value": 110, "contract_expires": "30/06/2033", "minutes": 2621, "g_a": 4, "xg90": 0.1, "npxg90": 0.09, "cards90": 0.48, "performance_score": 41.05, "value_efficiency": 0.37, "perf_rank": 15, "perf_flag": "OK", "availability_score": 89.23, "output_threat_score": 12.41, "shooting_efficiency": 51.1, "defensive_activity": 14.46, "yellow_cards": 11, "red_cards": 1, "profile_flag": "positive", "overall_sentiment": 0.252, "adaptability": 0.313, "discipline_nlp": 0.204, "injury_nlp": 0.192, "behavioral": 0.148, "guardian_articles": "20", "youtube_transcripts": "2", "weighting": "50_50", "narrative": "Caicedo's Guardian coverage reflects a record-fee Chelsea transfer with articles documenting both strong defensive moments and adaptation challenges under intense expectation. YouTube transcripts portray a composed, ambitious player with positive integration signals. Both sources moderately align. No behavioral or disciplinary concerns detected. Recruitment implication: strong long-term ceiling with a stabilising adaptation period."}, {"name": "Alexander Isak", "nlp_name": "Alexander Isak", "club": "Liverpool", "position": "Centre-Forward", "position_cat": "Forward", "age": 26, "market_value": 100, "contract_expires": "30/06/2031", "minutes": 699, "g_a": 4, "xg90": 0.38, "npxg90": 0.35, "cards90": 0, "performance_score": 40.26, "value_efficiency": 0.4, "perf_rank": 16, "perf_flag": "OK", "availability_score": 23.64, "output_threat_score": 44.39, "shooting_efficiency": 72.85, "defensive_activity": 3.17, "yellow_cards": 0, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.268, "adaptability": 0.355, "discipline_nlp": 0.182, "injury_nlp": 0.118, "behavioral": 0.419, "guardian_articles": "22", "youtube_transcripts": "4", "weighting": "50_50", "narrative": "Isak's profile reflects consistent scoring form and positive integration at Newcastle following his high-value transfer from Real Sociedad. Guardian articles and YouTube transcripts both praise his composure and technical quality. No disciplinary or behavioral concerns detected across the dataset. Both sources align strongly. Recruitment implication: a high-upside, low-risk striking profile with clear adaptability credentials."}, {"name": "Dominic Solanke", "nlp_name": "Dominic Solanke", "club": "Tottenham Hotspur", "position": "Centre-Forward", "position_cat": "Forward", "age": 28, "market_value": 35, "contract_expires": "30/06/2030", "minutes": 1001, "g_a": 3, "xg90": 0.27, "npxg90": 0.25, "cards90": 0.09, "performance_score": 40.0, "value_efficiency": 1.14, "perf_rank": 17, "perf_flag": "OK", "availability_score": 38.86, "output_threat_score": 31.69, "shooting_efficiency": 77.18, "defensive_activity": 7.04, "yellow_cards": 1, "red_cards": 0, "profile_flag": "at_risk", "overall_sentiment": -0.237, "adaptability": -0.078, "discipline_nlp": -0.424, "injury_nlp": -0.332, "behavioral": -0.312, "guardian_articles": "21", "youtube_transcripts": "0", "weighting": "guardian_only", "narrative": "Solanke's Guardian-only profile (no valid YouTube transcripts) reveals a predominantly negative press sentiment during his Bournemouth period, with articles critiquing scoring consistency and team performances despite his eventual high-value Tottenham transfer. No behavioral or disciplinary concerns are documented. The negative composite is driven by match-report coverage during a difficult club campaign. Recruitment implication: technical quality acknowledged but goal-contribution reliability requires independent statistical scrutiny beyond press sentiment."}, {"name": "Eberechi Eze", "nlp_name": "Eberechi Eze", "club": "Crystal Palace", "position": "Attacking Midfielder", "position_cat": "Midfielder", "age": 27, "market_value": 60, "contract_expires": "30/06/2029", "minutes": 83, "g_a": 0, "xg90": 0, "npxg90": 0, "cards90": 0, "performance_score": 39.73, "value_efficiency": 0.66, "perf_rank": 18, "perf_flag": "OK", "availability_score": 30.0, "output_threat_score": 20.0, "shooting_efficiency": 17.34, "defensive_activity": 100.0, "yellow_cards": 0, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.23, "adaptability": 0.251, "discipline_nlp": 0.043, "injury_nlp": 0.116, "behavioral": 0.398, "guardian_articles": "30", "youtube_transcripts": "5", "weighting": "50_50", "narrative": "Eze's Guardian coverage highlights growing elite recognition at Crystal Palace with consistent praise for his creativity and England progression. An ACL injury features historically but recovery coverage is positive. YouTube transcripts reveal a grounded, expressive personality. Both sources broadly align. Recruitment implication: elite creative talent with one historical injury now appearing resolved and strong developmental upside."}, {"name": "Reece James", "nlp_name": "Reece James", "club": "Chelsea", "position": "Right Back", "position_cat": "Defender", "age": 26, "market_value": 60, "contract_expires": "30/06/2032", "minutes": 1924, "g_a": 6, "xg90": 0.09, "npxg90": 0.08, "cards90": 0.19, "performance_score": 36.78, "value_efficiency": 0.61, "perf_rank": 19, "perf_flag": "OK", "availability_score": 60.04, "output_threat_score": 15.4, "shooting_efficiency": 44.72, "defensive_activity": 12.42, "yellow_cards": 4, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": -0.026, "adaptability": 0.145, "discipline_nlp": 0.095, "injury_nlp": -0.3, "behavioral": 0.088, "guardian_articles": "12", "youtube_transcripts": "3", "weighting": "50_50", "narrative": "James' Guardian profile is defined by a pattern of recurring serious injuries covering multiple documented hamstring and knee setbacks across consecutive seasons, and an FA charge for confronting a referee. YouTube transcripts present an aspirational, highly motivated player who frames recovery with determination. Sources diverge significantly in tone. Recruitment implication: world-class player profile significantly offset by documented recurring injury risk, requiring comprehensive independent medical evaluation."}, {"name": "Sandro Tonali", "nlp_name": "Sandro Tonali", "club": "Newcastle United", "position": "Defensive Midfielder", "position_cat": "Midfielder", "age": 26, "market_value": 80, "contract_expires": "30/06/2028", "minutes": 2482, "g_a": 2, "xg90": 0, "npxg90": 0, "cards90": 0.14, "performance_score": 35.7, "value_efficiency": 0.45, "perf_rank": 20, "perf_flag": "OK", "availability_score": 81.69, "output_threat_score": 5.09, "shooting_efficiency": 5.12, "defensive_activity": 7.85, "yellow_cards": 4, "red_cards": 0, "profile_flag": "at_risk", "overall_sentiment": -0.06, "adaptability": 0.202, "discipline_nlp": -0.42, "injury_nlp": 0.193, "behavioral": -0.25, "guardian_articles": "27", "youtube_transcripts": "3", "weighting": "50_50", "narrative": "Tonali's profile is defined by a ten-month ban for breaching Italian betting regulations, documented extensively across Guardian articles covering Newcastle's legal action against Milan and the FA investigation. This disciplinary event dominates all dimensions. YouTube transcripts show remorse and a positive return narrative; Guardian coverage is substantially more negative. Sources diverge sharply. Recruitment implication: exceptional talent carrying the highest-risk disciplinary profile in this cohort, warranting the most extensive due diligence."}, {"name": "Mason Mount", "nlp_name": "Mason Mount", "club": "Manchester Utd", "position": "Central Midfielder", "position_cat": "Midfielder", "age": 27, "market_value": 30, "contract_expires": "30/06/2028", "minutes": 934, "g_a": 3, "xg90": 0.29, "npxg90": 0.26, "cards90": 0.19, "performance_score": 33.71, "value_efficiency": 1.12, "perf_rank": 21, "perf_flag": "OK", "availability_score": 26.92, "output_threat_score": 30.79, "shooting_efficiency": 68.43, "defensive_activity": 7.48, "yellow_cards": 2, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.217, "adaptability": 0.361, "discipline_nlp": 0.273, "injury_nlp": -0.3, "behavioral": 0.341, "guardian_articles": "20", "youtube_transcripts": "6", "weighting": "50_50", "narrative": "Mount's Guardian profile at Manchester United is dominated by prolonged injury disruption following his expensive transfer, with repeated articles documenting absences and slow adaptation. YouTube transcripts present a determined player eager to prove his worth, creating a press-YouTube divergence. The physical unavailability is the most significant documented signal. Recruitment implication: proven Chelsea-era quality offset by current injury disruption and slow post-transfer adaptation, requiring medical reassessment."}, {"name": "Noni Madueke", "nlp_name": "Noni Madueke", "club": "Arsenal", "position": "Right Winger", "position_cat": "Winger", "age": 24, "market_value": 50, "contract_expires": "30/06/2030", "minutes": 1129, "g_a": 3, "xg90": 0.16, "npxg90": 0.15, "cards90": 0, "performance_score": 33.39, "value_efficiency": 0.67, "perf_rank": 22, "perf_flag": "OK", "availability_score": 35.35, "output_threat_score": 21.48, "shooting_efficiency": 47.63, "defensive_activity": 4.92, "yellow_cards": 0, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.243, "adaptability": 0.157, "discipline_nlp": 0.139, "injury_nlp": 0.275, "behavioral": 0.287, "guardian_articles": "27", "youtube_transcripts": "4", "weighting": "50_50", "narrative": "Madueke's Guardian coverage captures a young Chelsea player growing in confidence, with recognition for his directness and decisive impact from wide positions. YouTube transcripts show an energetic, self-assured personality. Both sources align positively. No significant injury or disciplinary signals. Recruitment implication: promising winger with positive behavioral and adaptability credentials."}, {"name": "Rodri", "nlp_name": "Rodri", "club": "Manchester City", "position": "Defensive Midfielder", "position_cat": "Midfielder", "age": 29, "market_value": 65, "contract_expires": "30/06/2027", "minutes": 1421, "g_a": 1, "xg90": 0.06, "npxg90": 0.05, "cards90": 0.13, "performance_score": 31.28, "value_efficiency": 0.48, "perf_rank": 23, "perf_flag": "OK", "availability_score": 52.21, "output_threat_score": 7.24, "shooting_efficiency": 37.63, "defensive_activity": 8.82, "yellow_cards": 2, "red_cards": 0, "profile_flag": "neutral", "overall_sentiment": -0.007, "adaptability": -0.338, "discipline_nlp": 0.115, "injury_nlp": -0.35, "behavioral": 0.444, "guardian_articles": "23", "youtube_transcripts": "2", "weighting": "50_50", "narrative": "Rodri's Guardian profile is anchored by Ballon d'Or recognition and elite acclaim as the Premier League's most complete midfielder. YouTube transcripts reveal a thoughtful, collective-minded leader. A serious knee injury documented in later Guardian coverage introduces significant availability risk as the single most material concern in an otherwise exemplary profile. Recruitment implication: world-class player whose injury status requires immediate independent medical clarification before any approach."}, {"name": "Martin Odegaard", "nlp_name": "Martin Odegaard", "club": "Arsenal", "position": "Attacking Midfielder", "position_cat": "Midfielder", "age": 27, "market_value": 65, "contract_expires": "30/06/2028", "minutes": 128, "g_a": 7, "xg90": 0.07, "npxg90": 0.06, "cards90": 0, "performance_score": 25.2, "value_efficiency": 0.39, "perf_rank": 24, "perf_flag": "OK", "availability_score": 13.94, "output_threat_score": 20.98, "shooting_efficiency": 36.74, "defensive_activity": 0.0, "yellow_cards": 0, "red_cards": 0, "profile_flag": "positive", "overall_sentiment": 0.425, "adaptability": 0.276, "discipline_nlp": 0.255, "injury_nlp": 0.303, "behavioral": 0.612, "guardian_articles": "7", "youtube_transcripts": "4", "weighting": "50_50", "narrative": "Odegaard's Guardian profile reflects consistent recognition as Arsenal's captain and creative fulcrum, with widespread praise for his leadership and tactical intelligence. An ankle injury features in some articles but recovery is rapid. YouTube transcripts confirm a composed, team-focused personality. Both sources strongly align. Recruitment implication: elite technical and leadership profile with minimal documented risk factors."}, {"name": "Jadon Sancho", "nlp_name": "Jadon Sancho", "club": "Aston Villa", "position": "Left Winger", "position_cat": "Winger", "age": 26, "market_value": 20, "contract_expires": "30/06/2026", "minutes": 876, "g_a": 2, "xg90": 0, "npxg90": 0, "cards90": 0, "performance_score": 20.02, "value_efficiency": 1.0, "perf_rank": 25, "perf_flag": "OK", "availability_score": 19.0, "output_threat_score": 7.83, "shooting_efficiency": 13.89, "defensive_activity": 1.69, "yellow_cards": 0, "red_cards": 0, "profile_flag": "at_risk", "overall_sentiment": -0.06, "adaptability": -0.18, "discipline_nlp": -0.35, "injury_nlp": 0.266, "behavioral": -0.22, "guardian_articles": "25", "youtube_transcripts": "5", "weighting": "50_50", "narrative": "Sancho's profile is fundamentally shaped by his highly publicised dispute with Erik ten Hag at Manchester United, documented in multiple Guardian articles covering social media confrontation, squad exile, and loan departure. YouTube transcripts from his Dortmund period present a player rebuilding positively, creating a significant press-YouTube divergence. Recruitment implication: elite talent significantly offset by documented authority-relationship and behavioral risks requiring thorough due diligence."}];
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let flagFilter = 'all', sortField = 'perf_rank', sortAsc = true;
+let scatterChart = null, dimChart = null, radarChart = null;
+let isDark = true;
+
+// ── THEME COLORS (updated on toggle) ─────────────────────────────────
+const DARK_C  = {muted:'#94a3b8',grid:'rgba(51,65,85,.4)',border:'#334155',card:'#1e293b',border2:'#475569'};
+const LIGHT_C = {muted:'#64748b',grid:'rgba(203,213,225,.5)',border:'#e2e8f0',card:'#ffffff',border2:'#94a3b8'};
+let C = {...DARK_C};
+
+// ── INIT ──────────────────────────────────────────────────────────────
+(function init(){
+  // Populate club filter
+  const clubs = [...new Set(PLAYERS.map(p=>p.club))].sort();
+  const sel = document.getElementById('f-club');
+  clubs.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.text=c; sel.appendChild(o); });
+  // Populate player selectors
+  const sp = document.getElementById('sel-player');
+  const sc = document.getElementById('sel-compare');
+  PLAYERS.forEach(p=>{
+    const o1=document.createElement('option'); o1.value=p.name; o1.text=p.name+' ('+p.club+')'; sp.appendChild(o1);
+    const o2=document.createElement('option'); o2.value=p.name; o2.text=p.name+' ('+p.club+')'; sc.appendChild(o2);
+  });
+  applyFilters();
+  renderPlayerCard();
+  updateSortHeaders();
+})();
+
+// ── THEME TOGGLE ─────────────────────────────────────────────────────
+function toggleTheme(){
+  isDark = !isDark;
+  C = isDark ? {...DARK_C} : {...LIGHT_C};
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('theme-btn').textContent = isDark ? '☀ Light mode' : '🌙 Dark mode';
+  // Redraw all charts with new theme colours
+  applyFilters();
+  renderPlayerCard();
+}
+
+// ── SORT HEADER HIGHLIGHT ─────────────────────────────────────────────
+function updateSortHeaders(){
+  document.querySelectorAll('#tbl-head-row th').forEach(th=>{
+    const f = th.dataset.field;
+    th.classList.remove('sort-asc','sort-desc','sorted');
+    if(f===sortField){
+      th.classList.add(sortAsc?'sort-asc':'sort-desc','sorted');
+    }
+  });
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────
+function showSection(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='playercard') renderPlayerCard();
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────
+function setFlagFilter(v){
+  flagFilter = v;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active-pill'));
+  const el = document.getElementById('f-'+v);
+  if(el) el.classList.add('active-pill');
+  applyFilters();
+}
+function resetFilters(){
+  flagFilter='all'; sortField='perf_rank'; sortAsc=true;
+  document.getElementById('f-pos').value='all';
+  document.getElementById('f-club').value='all';
+  setFlagFilter('all');
+}
+function getFiltered(){
+  const pos = document.getElementById('f-pos').value;
+  const club = document.getElementById('f-club').value;
+  return PLAYERS.filter(p=>{
+    if(flagFilter!=='all' && p.profile_flag!==flagFilter) return false;
+    if(pos!=='all' && p.position_cat!==pos) return false;
+    if(club!=='all' && p.club!==club) return false;
+    return true;
+  });
+}
+function applyFilters(){
+  const data = getFiltered();
+  data.sort((a,b)=>{
+    let av=a[sortField], bv=b[sortField];
+    if(typeof av==='string') return sortAsc?av.localeCompare(bv):bv.localeCompare(av);
+    return sortAsc?(av-bv):(bv-av);
+  });
+  renderTable(data);
+  renderScatter(data);
+  renderDimChart(data);
+  updateStats(data);
+  updateSortHeaders();
+}
+function sortTable(field){
+  if(sortField===field) sortAsc=!sortAsc; else{ sortField=field; sortAsc=field==='name'||field==='position'||field==='profile_flag'; }
+  updateSortHeaders();
+  applyFilters();
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────
+function updateStats(data){
+  document.getElementById('stat-total').textContent = data.length;
+  document.getElementById('stat-pos').textContent = data.filter(p=>p.profile_flag==='positive').length;
+  document.getElementById('stat-neu').textContent = data.filter(p=>p.profile_flag==='neutral').length;
+  document.getElementById('stat-risk').textContent = data.filter(p=>p.profile_flag==='at_risk').length;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function flagColor(f){ return f==='positive'?'#4ade80':f==='at_risk'?'#f87171':'#94a3b8'; }
+function flagIcon(f){ return f==='positive'?'✦':f==='at_risk'?'⚠':'◆'; }
+function hfColor(v){ return v>=0.17?'pos':v<=-0.05?'neg':'neu'; }
+function dimColor(v){ return v>0.1?'#4ade80':v<-0.1?'#f87171':'#94a3b8'; }
+function norm(v){ return Math.round((v+1)/2*100); } // -1..+1 → 0..100
+function fmt(v){ if(v===null||v===undefined) return '—'; return (v>0?'+':'')+v.toFixed(3); }
+function barFill(v,dim){
+  const pct = norm(v);
+  const left = pct>=50?'50%':pct+'%';
+  const w = Math.abs(pct-50)+'%';
+  return `<div class="dim-bar-center"></div>
+    <div class="dim-bar-fill" style="left:${left};width:${w};background:${dimColor(v)}"></div>`;
+}
+function posEmoji(pos){
+  if(pos==='Forward') return '🔴'; if(pos==='Winger') return '🟡';
+  if(pos==='Midfielder') return '🔵'; if(pos==='Defender') return '🟢';
+  return '🟣';
+}
+
+// ── TABLE ─────────────────────────────────────────────────────────────
+function renderTable(data){
+  const tbody = document.getElementById('tbl-body');
+  document.getElementById('tbl-count').textContent = data.length+' player'+(data.length!==1?'s':'');
+  tbody.innerHTML = data.map(p=>{
+    const hfc = hfColor(p.overall_sentiment);
+    return `<tr onclick="openPlayer('${p.name.replace(/'/g,"\\'")}')">
+      <td style="color:var(--muted);font-weight:700">${p.perf_rank}</td>
+      <td>
+        <div class="p-name">${p.name}</div>
+        <div class="p-club">${p.club}</div>
+      </td>
+      <td><span class="p-pos">${p.position}</span></td>
+      <td><span class="flag-badge ${p.profile_flag}">${flagIcon(p.profile_flag)} ${p.profile_flag.replace('_',' ')}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="hf-score ${hfc}">${fmt(p.overall_sentiment)}</div>
+        </div>
+      </td>
+      ${['adaptability','discipline_nlp','injury_nlp','behavioral'].map(d=>{
+        const v = p[d]; const c = dimColor(v);
+        return `<td><div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill" style="left:${v>=0?50:norm(v)}%;width:${Math.abs(norm(v)-50)}%;background:${c};position:absolute;height:100%"></div></div>
+          <span style="font-size:11px;color:${c};min-width:38px">${fmt(v)}</span>
+        </div></td>`;
+      }).join('')}
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div style="position:absolute;left:0;top:0;height:100%;width:${p.performance_score}%;background:var(--blue);border-radius:3px"></div></div>
+          <span class="bar-val" style="color:var(--blue)">${p.performance_score?.toFixed(0)||'—'}</span>
+        </div>
+      </td>
+      <td style="color:var(--gold);font-weight:700">€${p.market_value}m</td>
+      <td style="color:var(--muted)">${p.minutes?.toLocaleString()||'—'}'</td>
+      <td style="color:var(--text2);font-weight:600">${p.g_a??'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── SCATTER CHART ─────────────────────────────────────────────────────
+function renderScatter(data){
+  if(scatterChart){ scatterChart.destroy(); scatterChart=null; }
+  const ctx = document.getElementById('scatterChart').getContext('2d');
+  const datasets = data.map(p=>({
+    label: p.name,
+    data:[{x:p.performance_score, y:p.overall_sentiment, name:p.name, club:p.club, flag:p.profile_flag, mv:p.market_value}],
+    backgroundColor: flagColor(p.profile_flag)+'cc',
+    borderColor: flagColor(p.profile_flag),
+    borderWidth: 1.5,
+    pointRadius: Math.max(5, Math.sqrt((p.market_value||10))*1.8),
+    pointHoverRadius: Math.max(7, Math.sqrt((p.market_value||10))*2.2),
+  }));
+  scatterChart = new Chart(ctx,{
+    type:'bubble',
+    data:{datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label(ctx){
+              const d=ctx.raw;
+              return [`${d.name} (${d.club})`,`Performance: ${d.x?.toFixed(1)}`,
+                `Human Factor: ${d.y>=0?'+':''}${d.y?.toFixed(3)}`,
+                `Market Value: €${d.mv}m`,`Profile: ${d.flag?.replace('_',' ')}`];
+            }
+          },
+          backgroundColor:C.card,borderColor:C.border,borderWidth:1,
+          titleFont:{size:13,weight:'bold'},bodyFont:{size:12},padding:10
+        },
+        annotation:{},
+      },
+      scales:{
+        x:{title:{display:true,text:'Performance Score (0–100)',color:C.muted,font:{size:11}},
+          min:0,max:100,grid:{color:C.grid},ticks:{color:C.muted,font:{size:11}},
+          border:{color:C.border}},
+        y:{title:{display:true,text:'Human Factor Score',color:C.muted,font:{size:11}},
+          min:-0.6,max:0.6,
+          grid:{color:C.grid},ticks:{color:C.muted,font:{size:11},
+            callback:v=>v>0?'+'+v.toFixed(1):v.toFixed(1)},
+          border:{color:C.border}}
+      },
+      onClick(evt){
+        const pts = scatterChart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+        if(pts.length){
+          const p=data[pts[0].datasetIndex];
+          openPlayer(p.name);
+        }
+      }
+    }
+  });
+}
+
+// ── DIM CHART ─────────────────────────────────────────────────────────
+function renderDimChart(data){
+  if(dimChart){ dimChart.destroy(); dimChart=null; }
+  if(!data.length) return;
+  const ctx = document.getElementById('dimChart').getContext('2d');
+  const dims = ['adaptability','discipline_nlp','injury_nlp','behavioral'];
+  const labels = ['Adaptability','Discipline','Injury History','Behavioral'];
+  const avgs = dims.map(d=>+(data.reduce((s,p)=>s+(p[d]||0),0)/data.length).toFixed(3));
+  dimChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Avg score',
+        data:avgs,
+        backgroundColor:avgs.map(v=>v>=0.1?'rgba(74,222,128,.5)':v<=-0.1?'rgba(248,113,113,.5)':'rgba(148,163,184,.4)'),
+        borderColor:avgs.map(v=>v>=0.1?'#4ade80':v<=-0.1?'#f87171':'#94a3b8'),
+        borderWidth:1.5,borderRadius:6,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`Avg: ${c.raw>=0?'+':''}${c.raw.toFixed(3)}`},
+          backgroundColor:C.card,borderColor:C.border,borderWidth:1,padding:10}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:C.muted,font:{size:11}},border:{color:C.border}},
+        y:{min:-0.6,max:0.6,grid:{color:C.grid},
+          ticks:{color:C.muted,font:{size:11},callback:v=>v>0?'+'+v.toFixed(1):v.toFixed(1)},
+          border:{color:C.border}}
+      }
+    }
+  });
+}
+
+// ── PLAYER CARD ───────────────────────────────────────────────────────
+function openPlayer(name){
+  document.getElementById('sel-player').value = name;
+  showSection('playercard', document.querySelectorAll('.nav-btn')[1]);
+  renderPlayerCard();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderPlayerCard(){
+  const pname = document.getElementById('sel-player').value;
+  const cname = document.getElementById('sel-compare').value;
+  const p = PLAYERS.find(x=>x.name===pname);
+  const c = cname ? PLAYERS.find(x=>x.name===cname) : null;
+  if(!p) return;
+
+  // ── Header ──
+  const hdrEl = document.getElementById('pc-header');
+  const flagEmoji = p.profile_flag==='positive'?'✦':p.profile_flag==='at_risk'?'⚠':'◆';
+  hdrEl.innerHTML = `
+    <div class="player-avatar">${posEmoji(p.position_cat)}</div>
+    <div class="player-info">
+      <h2>${p.name}</h2>
+      <div class="pi-sub">
+        <span class="pi-tag">${p.club}</span>
+        <span class="pi-dot">·</span>
+        <span class="pi-tag">${p.position}</span>
+        <span class="pi-dot">·</span>
+        <span class="pi-tag">Age ${p.age}</span>
+        <span class="pi-dot">·</span>
+        <span class="pi-tag">€${p.market_value}m market value</span>
+        <span class="pi-dot">·</span>
+        <span class="pi-tag">Contract until ${p.contract_expires||'N/A'}</span>
+      </div>
+    </div>
+    <div class="player-hdr-right">
+      <span class="big-flag ${p.profile_flag}">${flagEmoji} ${p.profile_flag.replace('_',' ').toUpperCase()}</span>
+      <div class="hdr-scores">
+        <div class="hdr-score-item">
+          <div class="hsv" style="color:${flagColor(p.profile_flag)}">${fmt(p.overall_sentiment)}</div>
+          <div class="hsl">Human Factor</div>
+        </div>
+        <div class="hdr-score-item">
+          <div class="hsv" style="color:var(--blue)">${p.performance_score?.toFixed(1)||'—'}</div>
+          <div class="hsl">Perf. Score</div>
+        </div>
+        <div class="hdr-score-item">
+          <div class="hsv" style="color:var(--gold)">#${p.perf_rank}</div>
+          <div class="hsl">Perf. Rank</div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── Left: Radar + Dimension Bars ──
+  const leftEl = document.getElementById('pc-radar-col');
+  const dims = [
+    {key:'adaptability',label:'Adaptability',icon:'🔄'},
+    {key:'discipline_nlp',label:'Discipline',icon:'⚖'},
+    {key:'injury_nlp',label:'Injury History',icon:'🏥'},
+    {key:'behavioral',label:'Behavioral Profile',icon:'👤'},
+  ];
+  leftEl.innerHTML = `
+    <h4 style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:16px">
+      Human Factor Analysis <span style="color:var(--border2);font-weight:400;font-size:10px">(NLP-derived · -1.0 to +1.0)</span>
+    </h4>
+    <div style="position:relative;height:220px;margin-bottom:20px"><canvas id="radar-canvas"></canvas></div>
+    <div class="dim-section">
+      <h4>Dimension breakdown</h4>
+      ${dims.map(d=>{
+        const v = p[d.key]; const cv = c ? c[d.key] : null;
+        const col = dimColor(v);
+        return `<div class="dim-row">
+          <div class="dim-label">
+            <span class="dim-name">${d.icon} ${d.label}</span>
+            <span class="dim-val" style="color:${col}">${fmt(v)}${cv!==null?` <span style="color:${dimColor(cv)};font-size:10px">/ ${fmt(cv)}</span>`:''}</span>
+          </div>
+          <div class="dim-bar-bg">${barFill(v,d.key)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;background:rgba(15,23,42,.5);border:1px solid var(--border);border-radius:8px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Data sources</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="source-tag">📰 ${p.guardian_articles} Guardian articles</span>
+        <span class="source-tag">▶ ${p.youtube_transcripts} YouTube transcripts</span>
+        <span class="source-tag">⚖ ${p.weighting==='50_50'?'50/50 weighted':'Guardian only'}</span>
+      </div>
+    </div>`;
+
+  // Radar chart
+  setTimeout(()=>{
+    if(radarChart){ radarChart.destroy(); radarChart=null; }
+    const rctx = document.getElementById('radar-canvas')?.getContext('2d');
+    if(!rctx) return;
+    const labels = ['Adaptability','Discipline','Injury\nHistory','Behavioral\nProfile'];
+    const pData = dims.map(d=>norm(p[d.key]));
+    const datasets = [{
+      label:p.name, data:pData,
+      backgroundColor:'rgba(56,189,248,.15)', borderColor:'#38bdf8',
+      borderWidth:2, pointBackgroundColor:'#38bdf8', pointRadius:4,
+    }];
+    if(c){ datasets.push({
+      label:c.name, data:dims.map(d=>norm(c[d.key])),
+      backgroundColor:'rgba(251,191,36,.1)', borderColor:'#fbbf24',
+      borderWidth:2, pointBackgroundColor:'#fbbf24', pointRadius:4,
+    }); }
+    radarChart = new Chart(rctx,{
+      type:'radar',
+      data:{labels, datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:!!c, position:'bottom',
+          labels:{color:C.muted,font:{size:11},boxWidth:10,padding:12}}},
+        scales:{r:{
+          min:0, max:100,
+          grid:{color:C.grid},
+          angleLines:{color:C.grid},
+          pointLabels:{color:C.muted,font:{size:11}},
+          ticks:{stepSize:25, backdropColor:'transparent',color:C.border2,font:{size:9},
+            callback:v=>v===50?'±0':v===100?'+1.0':v===0?'−1.0':''},
+        }},
+      }
+    });
+  },50);
+
+  // ── Right: Performance metrics ──
+  const rightEl = document.getElementById('pc-metrics-col');
+  const availColor = p.availability_score>=70?'#4ade80':p.availability_score>=40?'#fbbf24':'#f87171';
+  rightEl.innerHTML = `
+    <h4 style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:16px">
+      Performance Metrics <span style="color:var(--border2);font-weight:400;font-size:10px">(FBref · 2024/25)</span>
+    </h4>
+    <div class="metric-grid" style="margin-bottom:18px">
+      <div class="metric-card">
+        <div class="mv" style="color:var(--blue)">${p.performance_score?.toFixed(1)||'—'}</div>
+        <div class="ml">Performance Score</div>
+        <div class="md">Rank #${p.perf_rank} / 25</div>
+      </div>
+      <div class="metric-card">
+        <div class="mv" style="color:${availColor}">${p.availability_score?.toFixed(0)||'—'}</div>
+        <div class="ml">Availability</div>
+        <div class="md">${p.minutes?.toLocaleString()||'—'} min played</div>
+      </div>
+      <div class="metric-card">
+        <div class="mv" style="color:var(--gold)">€${p.market_value}m</div>
+        <div class="ml">Market Value</div>
+        <div class="md">Efficiency: ${p.value_efficiency?.toFixed(2)||'—'}</div>
+      </div>
+      <div class="metric-card">
+        <div class="mv" style="color:var(--green)">${p.g_a??'—'}</div>
+        <div class="ml">Goals + Assists</div>
+        <div class="md">xG/90: ${p.xg90?.toFixed(2)||'—'}</div>
+      </div>
+      <div class="metric-card">
+        <div class="mv" style="color:var(--blue)">${p.xg90?.toFixed(2)||'—'}</div>
+        <div class="ml">xG per 90</div>
+        <div class="md">npxG: ${p.npxg90?.toFixed(2)||'—'}</div>
+      </div>
+      <div class="metric-card">
+        <div class="mv" style="color:${p.cards90>0.3?'#f87171':p.cards90>0.15?'#fbbf24':'#4ade80'}">${p.cards90?.toFixed(2)||'—'}</div>
+        <div class="ml">Cards per 90</div>
+        <div class="md">Y:${p.yellow_cards||0} R:${p.red_cards||0}</div>
+      </div>
+    </div>
+    <h4 style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px">Sub-scores breakdown</h4>
+    ${[
+      {label:'Availability Score',val:p.availability_score,max:100,color:'#38bdf8'},
+      {label:'Output & Threat',val:p.output_threat_score,max:100,color:'#a78bfa'},
+      {label:'Shooting Efficiency',val:Math.max(0,p.shooting_efficiency),max:100,color:'#34d399'},
+      {label:'Defensive Activity',val:Math.min(p.defensive_activity,100),max:100,color:'#fb923c'},
+    ].map(s=>`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;color:var(--text2)">${s.label}</span>
+          <span style="font-size:12px;font-weight:700;color:${s.color}">${s.val?.toFixed(1)||'—'}</span>
+        </div>
+        <div class="bar-bg" style="width:100%;height:8px;background:rgba(51,65,85,.6);border-radius:4px;position:relative;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${Math.min(100,(s.val||0)/s.max*100)}%;background:${s.color};border-radius:4px"></div>
+        </div>
+      </div>`).join('')}
+    ${p.perf_flag&&p.perf_flag!=='OK'?`<div style="margin-top:12px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:8px;font-size:11px;color:#fbbf24">⚠ ${p.perf_flag}</div>`:''}`;
+
+  // ── Narrative ──
+  const narEl = document.getElementById('pc-narrative');
+  const recStart = p.narrative.indexOf('Recruitment implication:');
+  const mainText = recStart>=0 ? p.narrative.substring(0,recStart) : p.narrative;
+  const recText = recStart>=0 ? p.narrative.substring(recStart) : '';
+  narEl.innerHTML = `
+    <h4>Analytical Narrative <span style="color:var(--border2);font-weight:400;font-size:10px;text-transform:none;letter-spacing:0">NLP-derived from ${p.guardian_articles} articles + ${p.youtube_transcripts} transcripts</span></h4>
+    <div class="narrative-text">
+      ${mainText}
+      ${recText?`<br><br><em>${recText}</em>`:''}
+    </div>
+    ${c?`<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Comparison: ${c.name}</div>
+      <div class="narrative-text" style="border-left-color:var(--gold)">
+        ${(()=>{const rs=c.narrative.indexOf('Recruitment implication:');const mt=rs>=0?c.narrative.substring(0,rs):c.narrative;const rt=rs>=0?c.narrative.substring(rs):'';return mt+(rt?`<br><br><em>${rt}</em>`:'');})()}
+      </div>
+    </div>`:''}`;
+}
+</script>
+</body>
+</html>
